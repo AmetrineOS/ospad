@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.2)
 # Note: the version here is the one currently *under development*. For released
 # versions, checkout GIT tags like "release-0.1.1".
 #
-project(ospad VERSION 0.0.1 LANGUAGES C CXX ASM)
+project(tilck VERSION 0.0.1 LANGUAGES C CXX ASM)
 
 include(CheckCCompilerFlag)
 include(other/cmake/utils.cmake)
