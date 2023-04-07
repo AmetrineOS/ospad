@@ -28,10 +28,9 @@ extern char _binary_font16x32_psf_start;
 static bool use_optimized;
 static u32 fb_term_rows;
 static u32 fb_term_cols;
-static u32 fb_offset_y;
 
 static bool cursor_enabled;
-static bool banner_refresh_disabled;
+// static bool banner_refresh_disabled;
 static u16 cursor_row;
 static u16 cursor_col;
 static u32 *under_cursor_buf;
@@ -50,7 +49,7 @@ static u32 cursor_color;
  *
  * See: fb_banner_update_battery_pm()
  */
-static int batt_charge_pm = -1;
+// static int batt_charge_pm = -1;
 
 static struct video_interface framebuffer_vi;
 
@@ -63,7 +62,7 @@ static void fb_save_under_cursor_buf(void)
       return;
 
    const u32 ix = cursor_col * font_w;
-   const u32 iy = fb_offset_y + cursor_row * font_h;
+   const u32 iy = cursor_row * font_h;
    fb_copy_from_screen(ix, iy, font_w, font_h, under_cursor_buf);
 }
 
@@ -76,7 +75,7 @@ static void fb_restore_under_cursor_buf(void)
       return;
 
    const u32 ix = cursor_col * font_w;
-   const u32 iy = fb_offset_y + cursor_row * font_h;
+   const u32 iy = cursor_row * font_h;
    fb_copy_to_screen(ix, iy, font_w, font_h, under_cursor_buf);
 }
 
@@ -94,7 +93,7 @@ static void fb_reset_blink_timer(void)
 static void fb_set_char_at_failsafe(u16 row, u16 col, u16 entry)
 {
    fb_draw_char_failsafe(col * font_w,
-                         fb_offset_y + row * font_h,
+                         row * font_h,
                          entry);
 
    if (row == cursor_row && col == cursor_col)
@@ -106,7 +105,7 @@ static void fb_set_char_at_failsafe(u16 row, u16 col, u16 entry)
 static void fb_set_char_at_optimized(u16 row, u16 col, u16 entry)
 {
    fb_draw_char_optimized(col * font_w,
-                          fb_offset_y + row * font_h,
+                          row * font_h,
                           entry);
 
    if (row == cursor_row && col == cursor_col)
@@ -117,7 +116,7 @@ static void fb_set_char_at_optimized(u16 row, u16 col, u16 entry)
 
 static void fb_clear_row(u16 row_num, u8 color)
 {
-   const u32 iy = fb_offset_y + row_num * font_h;
+   const u32 iy = row_num * font_h;
    fb_raw_color_lines(iy, font_h, vga_rgb_colors[get_color_bg(color)]);
 
    if (cursor_row == row_num)
@@ -149,7 +148,7 @@ static void fb_move_cursor(u16 row, u16 col, int cursor_vga_color)
 
       if (cursor_row < fb_term_rows && cursor_col < fb_term_cols) {
          fb_draw_cursor_raw(cursor_col * font_w,
-                            fb_offset_y + cursor_row * font_h,
+                            cursor_row * font_h,
                             cursor_color);
       }
 
@@ -193,7 +192,7 @@ static void fb_set_row_failsafe(u16 row, u16 *data, bool fpu_allowed)
 
 static void fb_set_row_optimized(u16 row, u16 *data, bool fpu_allowed)
 {
-   fb_draw_row_optimized(fb_offset_y + row * font_h,
+   fb_draw_row_optimized(row * font_h,
                          data,
                          fb_term_cols,
                          fpu_allowed);
@@ -201,18 +200,18 @@ static void fb_set_row_optimized(u16 row, u16 *data, bool fpu_allowed)
    fb_reset_blink_timer();
 }
 
-void fb_draw_banner(void);
+// void fb_draw_banner(void);
 
-static void fb_disable_banner_refresh(void)
-{
-   banner_refresh_disabled = true;
-}
+// static void fb_disable_banner_refresh(void)
+// {
+//    banner_refresh_disabled = true;
+// }
 
-static void fb_enable_banner_refresh(void)
-{
-   banner_refresh_disabled = false;
-   fb_draw_banner();
-}
+// static void fb_enable_banner_refresh(void)
+// {
+//    banner_refresh_disabled = false;
+//    fb_draw_banner();
+// }
 
 // ---------------------------------------------
 
@@ -225,9 +224,6 @@ static struct video_interface framebuffer_vi =
    fb_enable_cursor,
    fb_disable_cursor,
    NULL,  /* scroll_one_line_up: used only when running in a VM */
-   fb_draw_banner,
-   fb_disable_banner_refresh,
-   fb_enable_banner_refresh,
 };
 
 
@@ -256,187 +252,10 @@ static void fb_draw_string_at_raw(u32 x, u32 y, const char *str, u8 color)
          fb_draw_char_failsafe(x, y, make_vgaentry(*str, color));
 }
 
-static void fb_setup_banner(void)
-{
-   if (in_panic())
-      return;
-
-   fb_offset_y = (20 * font_h) / 10;
-}
-
-static void fb_banner_update_battery_pm(void)
-{
-   ulong charge;
-   int rc;
-
-   if (batt_charge_pm == -2)
-      return; /* Read already failed with an unrecoverable error */
-
-   if (get_acpi_init_status() != ais_fully_initialized)
-      return; /* Do nothing */
-
-   /* Do the actual read */
-   rc = acpi_get_all_batteries_charge_per_mille(&charge);
-
-   if (!rc)
-      batt_charge_pm = (int)charge;
-   else if (rc != -ENOMEM)
-      batt_charge_pm = -2; /* Unrecoverable error (anything != out of memory) */
-}
-
-static u32 fb_banner_left_side(char *buf, size_t buf_sz)
-{
-   int ttynum = 1;
-   int rc;
-
-   if (get_curr_tty())
-      ttynum = get_curr_tty_num();
-
-   if (ttynum > 0) {
-      rc = snprintk(buf, buf_sz, "Tilck [%s] [tty %d]", BUILDTYPE_STR, ttynum);
-   } else {
-      rc = snprintk(buf, buf_sz, "Tilck [%s]", BUILDTYPE_STR);
-   }
-
-   ASSERT(rc >= 0);
-   return MIN((u32)rc, buf_sz);
-}
-
-static u32 fb_banner_right_side(char *buf, size_t buf_sz)
-{
-   struct datetime d;
-   int rc;
-
-   if (batt_charge_pm == -1) {
-
-      /*
-       * Read the current battery charge per mille ONLY IF the value has never
-       * been read. The purpose of this is to avoid forcing battery's controller
-       * to do too many charge reads.
-       *
-       * The actual value is updated peridically by fb_update_banner().
-       */
-
-      fb_banner_update_battery_pm();
-   }
-
-   timestamp_to_datetime(get_timestamp(), &d);
-
-   if (batt_charge_pm >= 0) {
-
-      rc = snprintk(buf, buf_sz,
-                    "[Battery: %d.%d%%] [%02i %s %i %02i:%02i]",
-                    batt_charge_pm / 10,
-                    batt_charge_pm % 10,
-                    d.day, months3[d.month - 1],
-                    d.year, d.hour, d.min);
-
-   } else {
-
-      rc = snprintk(buf, buf_sz,
-                    "[%02i %s %i %02i:%02i]",
-                    d.day, months3[d.month - 1],
-                    d.year, d.hour, d.min);
-   }
-
-   ASSERT(rc >= 0);
-   return MIN((u32)rc, buf_sz);
-}
-
-void fb_draw_banner(void)
-{
-   static bool oom;
-   static char *lbuf;
-   static char *rbuf;
-
-   if (oom || !fb_offset_y)
-      return;
-
-   if (!lbuf) {
-
-      lbuf = kmalloc(fb_term_cols + 1);
-
-      if (!lbuf) {
-         oom = true;
-         return;
-      }
-   }
-
-   if (!rbuf) {
-
-      rbuf = kmalloc(fb_term_cols + 1);
-
-      if (!rbuf) {
-         oom = true;
-         return;
-      }
-   }
-
-   u32 llen, rlen, padding = 0;
-   ASSERT(fb_offset_y >= font_h);
-
-   /*
-    * Prepare banner's content.
-    *
-    * It's worth remarking that we're passing to our aux funcs fb_term_cols + 1
-    * as length which is the real buffer's length, not `fb_term_cols`. That's
-    * because snprintk() will always zero-terminate the buffer and it cannot do
-    * that in the corner case where all the columns have been used, without
-    * dropping one column. I.e. with a buffer of 80 chars, we can have at most
-    * 79 chars of data + 1 for the NUL terminator. Therefore, our buffers are +1
-    * char bigger.
-    */
-   llen = fb_banner_left_side(lbuf, fb_term_cols + 1);
-   rlen = fb_banner_right_side(rbuf, fb_term_cols + 1 - llen);
-
-   if (llen + rlen < fb_term_cols) {
-
-      /* Calculate the padding */
-      padding = fb_term_cols - llen - rlen;
-
-      /* Insert the padding after the content in the left buffer */
-      memset(lbuf + llen, ' ', padding);
-   }
-
-   /* Copy the whole right buffer in the left buffer, after the padding */
-   memcpy(lbuf + llen + padding, rbuf, rlen);
-
-   /* Make sure that, if we used the whole buffer, it is NUL-terminated */
-   lbuf[fb_term_cols] = 0;
-
-   /* Clear the banner area */
-   fb_raw_color_lines(0, fb_offset_y, 0 /* black */);
-
-   /* Draw the horizontal banner separation line */
-   fb_raw_color_lines(fb_offset_y - 4, 1, vga_rgb_colors[COLOR_BRIGHT_WHITE]);
-
-   /* Draw the actual banner's text */
-   fb_draw_string_at_raw(0, font_h/2, lbuf, COLOR_BRIGHT_YELLOW);
-
-   /* Clear the remaining screen area below the banner and the text */
-   u32 top_lines_used = fb_offset_y + font_h * fb_term_rows;
-   fb_raw_color_lines(top_lines_used,
-                      fb_get_height() - top_lines_used,
-                      vga_rgb_colors[COLOR_BLACK]);
-}
-
-static void fb_update_banner()
-{
-   while (true) {
-
-      if (!banner_refresh_disabled) {
-         fb_banner_update_battery_pm();
-         fb_draw_banner();
-      }
-
-      kernel_sleep(30 * TIMER_HZ);
-   }
-}
-
 static u32 fb_console_on_acpi_full_init_func(void *ctx)
 {
-   if (!banner_refresh_disabled)
-      fb_draw_banner();
+   // if (!banner_refresh_disabled)
+   //    fb_draw_banner();
 
    return 0;
 }
@@ -454,9 +273,9 @@ static void fb_scroll_one_line_up(void)
    if (enabled)
      fb_disable_cursor();
 
-   fb_lines_shift_up(fb_offset_y + font_h,  /* source: row 1 (+ following) */
-                     fb_offset_y,           /* destination: row 0 */
-                     fb_get_height() - fb_offset_y - font_h);
+   fb_lines_shift_up(font_h,  /* source: row 1 (+ following) */
+                     0,           /* destination: row 0 */
+                     fb_get_height() - font_h);
 
    if (enabled)
       fb_enable_cursor();
@@ -551,10 +370,8 @@ void init_fb_console(void)
    fb_set_font(font);
    fb_map_in_kernel_space();
 
-   if (FB_CONSOLE_BANNER)
-      fb_setup_banner();
 
-   fb_term_rows = (fb_get_height() - fb_offset_y) / font_h;
+   fb_term_rows = fb_get_height() / font_h;
    fb_term_cols = fb_get_width() / font_w;
 
    if (!in_panic()) {
@@ -589,19 +406,4 @@ void init_fb_console(void)
 
    if (FB_CONSOLE_CURSOR_BLINK)
       fb_create_cursor_blinking_thread();
-
-   if (fb_offset_y) {
-      if (kthread_create(fb_update_banner, 0, NULL) > 0) {
-
-         /* Success */
-         if (MOD_acpi) {
-            acpi_reg_on_full_init_cb(&fb_console_on_acpi_full_init_node);
-         }
-
-      } else {
-
-         /* Oops! Something went wrong */
-         printk("WARNING: unable to create the fb_update_banner\n");
-      }
-   }
 }

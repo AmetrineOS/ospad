@@ -45,6 +45,10 @@
    "workbench.editor.enablePreview": false,
    "python.analysis.extraPaths": ["${workspaceFolder}/tests/runners"],
    "files.associations": {
+      "*.cfg": "plaintext",
+      "*.cs": "csharp",
+      "*.md": "markdown",
+      "gigaforge": "shellscript",
       "x86_utils.h": "c",
       "time.h": "c",
       "types.h": "c",
@@ -217,7 +221,8 @@
       "inttypes.h": "c",
       "stddef.h": "c",
       "stdint.h": "c",
-      "alltypes.h": "c"
+      "alltypes.h": "c",
+      "hash_set": "c"
    },
    "python.pythonPath": "/usr/bin/python3",
 }

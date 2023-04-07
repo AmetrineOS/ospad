@@ -92,9 +92,6 @@ static const struct video_interface no_output_vi =
    no_vi_enable_cursor,
    no_vi_disable_cursor,
    no_vi_scroll_one_line_up,
-   no_vi_redraw_static_elements,
-   no_vi_disable_static_elems_refresh,
-   no_vi_enable_static_elems_refresh
 };
 
 /* --------------------------------------------------------- */

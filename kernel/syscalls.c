@@ -98,8 +98,8 @@ int sys_newuname(struct utsname *user_buf)
 
    extract_commit_hash_and_date(&tilck_build_info, &comm);
 
-   strcpy(buf.sysname, "Tilck");
-   strcpy(buf.nodename, "tilck");
+   strcpy(buf.sysname, "OSPAD");
+   strcpy(buf.nodename, "temp");
    strcpy(buf.version, comm.hash);
    strcpy(buf.release, tilck_build_info.ver);
    strcpy(buf.machine, tilck_build_info.arch);

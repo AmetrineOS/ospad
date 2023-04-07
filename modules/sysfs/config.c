@@ -55,7 +55,6 @@ DEF_STATIC_CONF_RO(ULONG, big_font_threshold,      FBCON_BIGFONT_THR);
 DEF_STATIC_CONF_RO(BOOL,  banner,                  FB_CONSOLE_BANNER);
 DEF_STATIC_CONF_RO(BOOL,  cursor_blink,            FB_CONSOLE_CURSOR_BLINK);
 DEF_STATIC_CONF_RO(BOOL,  use_alt_fonts,           FB_CONSOLE_USE_ALT_FONTS);
-DEF_STATIC_CONF_RO(BOOL,  show_logo,               KERNEL_SHOW_LOGO);
 DEF_STATIC_CONF_RO(BOOL,  big_scroll_buf,          TERM_BIG_SCROLL_BUF);
 DEF_STATIC_CONF_RO(BOOL,  failsafe_opt,            FB_CONSOLE_FAILSAFE_OPT);
 
@@ -129,7 +128,6 @@ void sysfs_create_config_obj(void)
       SYSOBJ_CONF_PROP_PAIR(banner),
       SYSOBJ_CONF_PROP_PAIR(cursor_blink),
       SYSOBJ_CONF_PROP_PAIR(use_alt_fonts),
-      SYSOBJ_CONF_PROP_PAIR(show_logo),
       SYSOBJ_CONF_PROP_PAIR(big_scroll_buf),
       SYSOBJ_CONF_PROP_PAIR(failsafe_opt),
       NULL

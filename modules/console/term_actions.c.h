@@ -360,8 +360,6 @@ DEFINE_TERM_ACTION_1(erase_chars_in_line, u16)
 static void
 term_action_pause_output(struct vterm *const t)
 {
-   if (t->vi->disable_static_elems_refresh)
-      t->vi->disable_static_elems_refresh();
 
    t->vi->disable_cursor();
    t->saved_vi = t->vi;
@@ -379,13 +377,13 @@ term_action_restart_output(struct vterm *const t)
    if (t->scroll == t->max_scroll)
       term_int_enable_cursor(t, t->cursor_enabled);
 
-   if (!in_panic()) {
-      if (t->vi->redraw_static_elements)
-         t->vi->redraw_static_elements();
+   // if (!in_panic()) {
+   //    if (t->vi->redraw_static_elements)
+   //       t->vi->redraw_static_elements();
 
-      if (t->vi->enable_static_elems_refresh)
-         t->vi->enable_static_elems_refresh();
-   }
+   //    if (t->vi->enable_static_elems_refresh)
+   //       t->vi->enable_static_elems_refresh();
+   // }
 }
 
 DEFINE_TERM_ACTION_0(restart_output)

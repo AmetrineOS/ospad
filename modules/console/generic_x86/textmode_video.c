@@ -112,9 +112,6 @@ static const struct video_interface ega_text_mode_i =
    textmode_enable_cursor,
    textmode_disable_cursor,
    NULL, /* textmode_scroll_one_line_up (see the comment) */
-   NULL, /* redraw_static_elements */
-   NULL, /* disable_static_elems_refresh */
-   NULL, /* enable_static_elems_refresh */
 };
 
 void init_textmode_console(void)

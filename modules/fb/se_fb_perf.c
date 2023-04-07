@@ -44,8 +44,6 @@ void internal_selftest_fb_perf(bool use_fpu)
    printk("cycles per redraw: %" PRIu64 "\n", cycles);
    printk("cycles per 32 pixels: %" PRIu64 "\n", 32 * cycles / pixels);
    printk("use_fpu: %d\n", use_fpu);
-
-   fb_draw_banner();
 }
 
 void selftest_fbperf_nofpu(void)
